@@ -49,7 +49,7 @@ if __name__ == '__main__':
         results = requests.get("http://net.tsinghua.edu.cn", timeout=10)
         if results.ok and re.search("wired", results.url) != None:
             connector = methods.NetTsinghuaConnector(username, password)
-        if results.ok and re.search("auth4", results.url) != None:
+        if results.ok and re.search("auth4", results.url + results.text) != None:
             connector = methods.AuthTsinghuaConnector(username, password)
     except:  # fallback to default
         connector = methods.AuthTsinghuaConnector(username, password) 
@@ -61,3 +61,10 @@ if __name__ == '__main__':
         connector.disconnect()
     else:
         print("Action '{}' not supported!".format(action))
+
+    # print current ip
+    try:
+        results = requests.get("https://checkip.amazonaws.com")
+        print("Current IP:" + results.text)
+    except:
+        print("Exception occured in obtaining current IP!")
