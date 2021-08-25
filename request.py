@@ -20,7 +20,7 @@ class Request():
             self.adapter = HTTPAdapterWithSocketOptions()
         else:
             self.adapter = HTTPAdapterWithSocketOptions(socket_options=[(
-                socket.SOL_SOCKET, socket.SO_BINDTODEVICE, interface.encode('utf-8'))])
+                socket.SOL_SOCKET, socket.SO_BINDTODEVICE, interface.encode('utf-8'))], max_retries=3)
         self.session = requests.session()
         self.session.mount("http://", self.adapter)
         self.session.mount("https://", self.adapter)
