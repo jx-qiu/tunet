@@ -26,9 +26,9 @@ def parse_args():
 
 if __name__ == '__main__':
     os.environ['no_proxy'] = '*'
-   
+
     log.basicConfig(level=log.INFO,
-                format='%(asctime)s - %(levelname)s: %(message)s')
+                    format='%(asctime)s - %(levelname)s: %(message)s')
 
     log.info("TUNet Login Script")
     log.info(datetime.now())
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     if username == "":  # username not in config file either
         username = input("Username:").strip()
         password = getpass.getpass("Password:").strip()
-    
+
     if action == "login":
         try:
             methods.NetTsinghuaConnector(username, password, interface).connect()
