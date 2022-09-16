@@ -15,10 +15,10 @@ class Connector():
         'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0'
     }
     
-    def __init__(self, username: str, password: str):
+    def __init__(self, username: str, password: str, interface=""):
         self.username = username
         self.password = password
-        self.requests = Request("")
+        self.requests = Request(interface)
 
     def connect(self):
         return True
@@ -26,17 +26,14 @@ class Connector():
     def disconnect(self):
         return True
 
-    def set_interface(self, interface: str):
-        self.requests = Request(interface)
-
 class NetTsinghuaConnector(Connector):
     """
     Connector that uses net.tsinghua.edu.cn as portal.
     """
     url = "http://net.tsinghua.edu.cn/do_login.php"
 
-    def __init__(self, username, password):
-        super().__init__(username, password)
+    def __init__(self, username, password, interface):
+        super().__init__(username, password, interface)
 
     def connect(self):
         params = {
@@ -63,34 +60,35 @@ class AuthTsinghuaConnector(Connector):
     get_challenge_api_6 = "http://auth6.tsinghua.edu.cn/cgi-bin/get_challenge"
     srun_portal_api = "http://auth4.tsinghua.edu.cn/cgi-bin/srun_portal"
     srun_portal_api_6 = "http://auth6.tsinghua.edu.cn/cgi-bin/srun_portal"
+    acid_triggers = ["http://net.tsinghua.edu.cn", "http://info.tsinghua.edu.cn"]
     n = '200'
     type = '1'
     enc = "srun_bx1"
 
-    def __init__(self, username, password):
-        super().__init__(username, password)
+    def __init__(self, username, password, interface):
+        super().__init__(username, password, interface)
         self.ac_id = "1"
-        self.update_acid()
-
-    def set_interface(self, interface: str):
-        self.requests = Request(interface)
         self.update_acid()
     
     def update_acid(self):
-        results = self.requests.get("http://net.tsinghua.edu.cn")
-        results = re.search("index_([0-9]+).html", results.text)
-        if (results != None):
-            self.ac_id = results.group(1)
+        for trigger in acid_triggers:
+            try:
+                results = self.requests.get("")
+                self.ac_id = re.search("index_([0-9]+).html", results.text).group(1)
+                break
+            except:
+                pass
 
     def connect(self):
         self.act("login")
+        self.act("login", ipv4=False)
         return True
 
     def disconnect(self):
         self.act("logout")
         return True
 
-    def act(self, action: str):
+    def act(self, action: str, ipv4=True):
         get_challenge_params = {
             "callback": "jQuery111306297270886466729_"+str(int(time.time()*1000)),
             "username": self.username,
@@ -99,7 +97,7 @@ class AuthTsinghuaConnector(Connector):
         }
         # print(get_challenge_params)
         get_challenge_res = self.requests.get(
-            self.get_challenge_api, params=get_challenge_params, headers=self.header)
+            self.get_challenge_api if ipv4 else self.get_challenge_api_6, params=get_challenge_params, headers=self.header)
         token = re.search('"challenge":"(.*?)"', get_challenge_res.text).group(1)
 
         i = self.get_info()
@@ -129,7 +127,7 @@ class AuthTsinghuaConnector(Connector):
             '_': int(time.time()*1000)
         }
         srun_portal_res = self.requests.get(
-            self.srun_portal_api, params=srun_portal_params, headers=self.header)
+            self.srun_portal_api if ipv4 else self.srun_portal_api_6, params=srun_portal_params, headers=self.header)
         # print(srun_portal_res.text)
         print("Login IP: " + re.search('"client_ip":"(.*?)"',
             srun_portal_res.text).group(1))
