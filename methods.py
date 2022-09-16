@@ -2,10 +2,13 @@
 This file specifies all the available methods of connection to TUNet.
 """
 
+import logging as log
+import re
+import time
+
 import crypto
 from request import Request
-import time
-import re
+
 
 class Connector():
     """
@@ -14,7 +17,7 @@ class Connector():
     header = {
         'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0'
     }
-    
+
     def __init__(self, username: str, password: str, interface=""):
         self.username = username
         self.password = password
@@ -25,6 +28,7 @@ class Connector():
 
     def disconnect(self):
         return True
+
 
 class NetTsinghuaConnector(Connector):
     """
@@ -43,14 +47,15 @@ class NetTsinghuaConnector(Connector):
             "ac_id": 1
         }
         res = self.requests.post(self.url, params, headers=self.header)
-        print(res.text)
+        log.info(res.text)
 
     def disconnect(self):
         params = {
             "action": "logout"
         }
         res = self.requests.post(self.url, params, headers=self.header)
-        print(res.text)
+        log.info(res.text)
+
 
 class AuthTsinghuaConnector(Connector):
     """
@@ -69,7 +74,7 @@ class AuthTsinghuaConnector(Connector):
         super().__init__(username, password, interface)
         self.ac_id = "1"
         self.update_acid()
-    
+
     def update_acid(self):
         for trigger in acid_triggers:
             try:
@@ -95,7 +100,7 @@ class AuthTsinghuaConnector(Connector):
             "ip": "",
             "_": int(time.time()*1000),
         }
-        # print(get_challenge_params)
+        # log.info(get_challenge_params)
         get_challenge_res = self.requests.get(
             self.get_challenge_api if ipv4 else self.get_challenge_api_6, params=get_challenge_params, headers=self.header)
         token = re.search('"challenge":"(.*?)"', get_challenge_res.text).group(1)
@@ -128,12 +133,12 @@ class AuthTsinghuaConnector(Connector):
         }
         srun_portal_res = self.requests.get(
             self.srun_portal_api if ipv4 else self.srun_portal_api_6, params=srun_portal_params, headers=self.header)
-        # print(srun_portal_res.text)
-        print("Login IP: " + re.search('"client_ip":"(.*?)"',
-            srun_portal_res.text).group(1))
-        print(re.search('"error":"(.*?)"', srun_portal_res.text).group(1) +
-            ". " + re.search('"error_msg":"(.*?)"', srun_portal_res.text).group(1))
-        print("")
+        # log.info(srun_portal_res.text)
+        log.info("Login IP: " + re.search('"client_ip":"(.*?)"',
+                                       srun_portal_res.text).group(1))
+        log.info(re.search('"error":"(.*?)"', srun_portal_res.text).group(1) +
+              ". " + re.search('"error_msg":"(.*?)"', srun_portal_res.text).group(1))
+        log.info("")
 
     def get_info(self):
         info_temp = {
@@ -146,4 +151,3 @@ class AuthTsinghuaConnector(Connector):
         i = re.sub("'", '"', str(info_temp))
         i = re.sub(" ", '', i)
         return i
-
