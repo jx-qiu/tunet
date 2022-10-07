@@ -65,7 +65,7 @@ class AuthTsinghuaConnector(Connector):
     get_challenge_api_6 = "http://auth6.tsinghua.edu.cn/cgi-bin/get_challenge"
     srun_portal_api = "http://auth4.tsinghua.edu.cn/cgi-bin/srun_portal"
     srun_portal_api_6 = "http://auth6.tsinghua.edu.cn/cgi-bin/srun_portal"
-    acid_triggers = ["http://net.tsinghua.edu.cn", "http://info.tsinghua.edu.cn"]
+    acid_triggers = ["http://info.tsinghua.edu.cn", "http://net.tsinghua.edu.cn"]
     n = '200'
     type = '1'
     enc = "srun_bx1"
@@ -76,9 +76,9 @@ class AuthTsinghuaConnector(Connector):
         self.update_acid()
 
     def update_acid(self):
-        for trigger in acid_triggers:
+        for trigger in self.acid_triggers:
             try:
-                results = self.requests.get("")
+                results = self.requests.get(trigger)
                 self.ac_id = re.search("index_([0-9]+).html", results.text).group(1)
                 break
             except:
