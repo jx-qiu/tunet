@@ -76,8 +76,9 @@ if __name__ == '__main__':
     # print current ip
     requests = Request(interface)
     try:
-        results = requests.get("https://checkip.amazonaws.com", timeout=5)
-        log.info("Current IP: " + results.text)
+        results = requests.get("https://checkip.dns.he.net")
+        results = re.search("Your IP address is : ([0-9a-f.:]+)</body>", results.text, re.IGNORECASE).group(1)
+        log.info("Current IP: " + results)
     except:
         log.warn("Warning: Unable to obtain current IP!")
         log.warn(traceback.format_exc())
