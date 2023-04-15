@@ -11,8 +11,8 @@ import re
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-4", action="store_false", dest="ipv6")
-    parser.add_argument("-6", action="store_false", dest="ipv4")
+    parser.add_argument("-4", action="store_false", dest="ipv4")
+    parser.add_argument("-6", action="store_false", dest="ipv6")
     parser.add_argument("-i", metavar="INTERFACE", dest="interface", default="")
     parser.add_argument("-p", metavar="PASSWORD", dest="password", default="")
     parser.add_argument("-u", metavar="USERNAME", dest="username", default="")
@@ -22,6 +22,8 @@ def parse_args():
 
 
 if __name__ == '__main__':
+    os.environ['no_proxy'] = '*'
+    
     print("TUNet Login Script")
     print(datetime.now())
     print("-" * 50)
@@ -68,7 +70,7 @@ if __name__ == '__main__':
 
     # print current ip
     try:
-        results = requests.get("https://checkip.amazonaws.com")
+        results = requests.get("https://checkip.amazonaws.com", timeout=5)
         print("Current IP: " + results.text)
     except:
         print("Warning: Unable to obtain current IP!")
