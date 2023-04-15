@@ -5,11 +5,9 @@ import argparse
 import methods
 import getpass
 import os
-import sys
-import crypto
 import requests
-import time
 import re
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -21,19 +19,6 @@ def parse_args():
     parser.add_argument("action", metavar="ACTION", default="login", nargs='*')
     options = parser.parse_args()
     return options
-
-
-def check():
-    testURL = "https://www.baidu.com"
-    try:
-        # use https, for http might suffer MITM
-        results = requests.get(testURL)
-        if results.ok:  # connection successful
-            return True
-
-        return False
-    except requests.exceptions.RequestException as e:
-        return False
 
 
 if __name__ == '__main__':
@@ -56,31 +41,20 @@ if __name__ == '__main__':
         username = input("Username:").strip()
         password = getpass.getpass("Password:").strip()
 
-    # if (check()):
-    #     print("Connection test successful, no actions needed.")
-    #     exit(0)
-
-    # no network connection, try connecting
+    # try connecting
     connector = None
     try:
         results = requests.get("http://net.tsinghua.edu.cn")
-        if results.ok and re.search("auth4", results.url) != -1:
-            connector = methods.AuthTsinghuaConnector(username, password)
         if results.ok and re.search("wired", results.url) != None:
             connector = methods.NetTsinghuaConnector(username, password)
-    except: # fallback to default
+        if results.ok and re.search("auth4", results.url) != None:
+            connector = methods.AuthTsinghuaConnector(username, password)
+    except:  # fallback to default
         connector = methods.AuthTsinghuaConnector(username, password)
-    
+
     if action == "login":
         connector.connect()
-        if (check()):
-            print("Connection successful.")
-            exit(0)
-        else:
-            print("Connection failed.")
-            exit(1)
     elif action == "logout":
         connector.disconnect()
     else:
         print("Action '{}' not supported!".format(action))
-
