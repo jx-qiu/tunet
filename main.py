@@ -5,7 +5,7 @@ import argparse
 import methods
 import getpass
 import os
-import requests
+from request import Request
 import re
 
 
@@ -13,10 +13,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-4", action="store_false", dest="ipv6")
     parser.add_argument("-6", action="store_false", dest="ipv4")
-    parser.add_argument("-a", metavar="AC_ID", dest="ac_id", default="1")
+    parser.add_argument("-i", metavar="INTERFACE", dest="interface", default="")
     parser.add_argument("-p", metavar="PASSWORD", dest="password", default="")
     parser.add_argument("-u", metavar="USERNAME", dest="username", default="")
-    parser.add_argument("action", metavar="ACTION", default="login", nargs='*')
+    parser.add_argument("action", metavar="ACTION", default="login", nargs='?')
     options = parser.parse_args()
     return options
 
@@ -27,8 +27,8 @@ if __name__ == '__main__':
     print("-" * 50)
 
     opts = parse_args()
-    action = opts.action[0]
-    ac_id = opts.ac_id
+    action = opts.action
+    interface = opts.interface
     username = opts.username
     password = opts.password
 
@@ -41,16 +41,19 @@ if __name__ == '__main__':
         username = input("Username:").strip()
         password = getpass.getpass("Password:").strip()
 
+    requests = Request(interface)
+    
     # try connecting
     connector = None
     try:
-        results = requests.get("http://net.tsinghua.edu.cn")
+        results = requests.get("http://net.tsinghua.edu.cn", timeout=10)
         if results.ok and re.search("wired", results.url) != None:
             connector = methods.NetTsinghuaConnector(username, password)
         if results.ok and re.search("auth4", results.url) != None:
             connector = methods.AuthTsinghuaConnector(username, password)
     except:  # fallback to default
-        connector = methods.AuthTsinghuaConnector(username, password)
+        connector = methods.AuthTsinghuaConnector(username, password) 
+    connector.set_interface(interface)
 
     if action == "login":
         connector.connect()

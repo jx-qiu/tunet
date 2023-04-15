@@ -3,7 +3,7 @@ This file specifies all the available methods of connection to TUNet.
 """
 
 import crypto
-import requests
+from request import Request
 import time
 import re
 
@@ -15,15 +15,19 @@ class Connector():
         'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0'
     }
     
-    def __init__(self, username, password):
+    def __init__(self, username: str, password: str):
         self.username = username
         self.password = password
+        self.requests = Request("")
 
     def connect(self):
         return True
 
     def disconnect(self):
         return True
+
+    def set_interface(self, interface: str):
+        self.requests = Request(interface)
 
 class NetTsinghuaConnector(Connector):
     """
@@ -41,14 +45,14 @@ class NetTsinghuaConnector(Connector):
             "password": "{MD5_HEX}" + crypto.get_md5_hex(self.password),
             "ac_id": 1
         }
-        res = requests.post(self.url, params, headers=self.header)
+        res = self.requests.post(self.url, params, headers=self.header)
         print(res.text)
 
     def disconnect(self):
         params = {
             "action": "logout"
         }
-        res = requests.post(self.url, params, headers=self.header)
+        res = self.requests.post(self.url, params, headers=self.header)
         print(res.text)
 
 class AuthTsinghuaConnector(Connector):
@@ -66,7 +70,14 @@ class AuthTsinghuaConnector(Connector):
     def __init__(self, username, password):
         super().__init__(username, password)
         self.ac_id = "1"
-        results = requests.get("http://net.tsinghua.edu.cn")
+        self.update_acid()
+
+    def set_interface(self, interface: str):
+        self.requests = Request(interface)
+        self.update_acid()
+    
+    def update_acid(self):
+        results = self.requests.get("http://net.tsinghua.edu.cn")
         results = re.search("index_([0-9]+).html", results.text)
         if (results != None):
             self.ac_id = results.group(1)
@@ -79,7 +90,7 @@ class AuthTsinghuaConnector(Connector):
         self.act("logout")
         return True
 
-    def act(self, action):
+    def act(self, action: str):
         get_challenge_params = {
             "callback": "jQuery111306297270886466729_"+str(int(time.time()*1000)),
             "username": self.username,
@@ -87,7 +98,7 @@ class AuthTsinghuaConnector(Connector):
             "_": int(time.time()*1000),
         }
         # print(get_challenge_params)
-        get_challenge_res = requests.get(
+        get_challenge_res = self.requests.get(
             self.get_challenge_api, params=get_challenge_params, headers=self.header)
         token = re.search('"challenge":"(.*?)"', get_challenge_res.text).group(1)
 
@@ -117,7 +128,7 @@ class AuthTsinghuaConnector(Connector):
             'double_stack': '1',
             '_': int(time.time()*1000)
         }
-        srun_portal_res = requests.get(
+        srun_portal_res = self.requests.get(
             self.srun_portal_api, params=srun_portal_params, headers=self.header)
         # print(srun_portal_res.text)
         print("Login IP: " + re.search('"client_ip":"(.*?)"',
