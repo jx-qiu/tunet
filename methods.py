@@ -84,9 +84,11 @@ class AuthTsinghuaConnector(Connector):
             except:
                 pass
 
-    def connect(self):
-        self.act("login")
-        self.act("login", ipv4=False)
+    def connect(self, ipv4=True, ipv6=True):
+        if ipv4:
+            self.act("login")
+        if ipv6:
+            self.act("login", ipv4=False)
         return True
 
     def disconnect(self):
