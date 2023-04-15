@@ -7,7 +7,8 @@ import getpass
 import os
 from request import Request
 import re
-
+import logging as log
+import traceback
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -23,10 +24,13 @@ def parse_args():
 
 if __name__ == '__main__':
     os.environ['no_proxy'] = '*'
-    
-    print("TUNet Login Script")
-    print(datetime.now())
-    print("-" * 50)
+   
+    log.basicConfig(level=log.INFO,
+                format='%(asctime)s - %(levelname)s: %(message)s')
+
+    log.info("TUNet Login Script")
+    log.info(datetime.now())
+    log.info("-" * 50)
 
     opts = parse_args()
     action = opts.action
@@ -54,9 +58,11 @@ if __name__ == '__main__':
         elif results.ok and re.search("auth4", results.url + results.text) != None:
             connector = methods.AuthTsinghuaConnector(username, password)
         else: #fallback to default
+            log.warn("Unable to parse portal message, falling back to default ...")
             connector = methods.AuthTsinghuaConnector(username, password)
     except: # cannot even connect to the portal, abort
-        print("Error: Cannot connect to portal!")
+        log.error("Cannot connect to portal!")
+        log.error(traceback.format_exc())
         exit(1)
          
     connector.set_interface(interface)
@@ -66,11 +72,12 @@ if __name__ == '__main__':
     elif action == "logout":
         connector.disconnect()
     else:
-        print("Error: Action '{}' not supported!".format(action))
+        log.error("Action '{}' not supported!".format(action))
 
     # print current ip
     try:
         results = requests.get("https://checkip.amazonaws.com", timeout=5)
-        print("Current IP: " + results.text)
+        log.info("Current IP: " + results.text)
     except:
-        print("Warning: Unable to obtain current IP!")
+        log.warn("Warning: Unable to obtain current IP!")
+        log.warn(traceback.format_exc())
